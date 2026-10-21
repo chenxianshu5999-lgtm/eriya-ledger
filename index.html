@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>エリオや 艺祭账本</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one column, phone-first booth register — sticky total band, tab bar, big tap targets */
+:root{
+  --bg:#EDF1F0; --paper:#FFFFFF; --ink:#1E2A2D; --muted:#66767A; --line:#D3DCDB;
+  --accent:#2C7A68; --accent-ink:#FFFFFF; --soft:#DCEBE6; --warn:#B4442E; --amber:#A8650C; --amber-soft:#F6E7CF;
+  --f-display:"DotGothic16","Noto Sans SC",ui-monospace,monospace;
+  --f-body:"Noto Sans SC","Hiragino Sans","PingFang SC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121A1B; --paper:#1B2527; --ink:#E4ECEA; --muted:#93A4A6; --line:#2E3B3D;
+  --accent:#5BC2A7; --accent-ink:#0E1A17; --soft:#203A34; --warn:#E5785F; --amber:#E7AE57; --amber-soft:#3A2D18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121A1B; --paper:#1B2527; --ink:#E4ECEA; --muted:#93A4A6; --line:#2E3B3D;
+  --accent:#5BC2A7; --accent-ink:#0E1A17; --soft:#203A34; --warn:#E5785F; --amber:#E7AE57; --amber-soft:#3A2D18; color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.band{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:var(--bg)}
+.band .in{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 10px;display:flex;align-items:end;justify-content:space-between;gap:12px}
+.brand{font-size:12px;letter-spacing:.08em;opacity:.75}
+.brand b{display:block;font-family:var(--f-display);font-size:20px;letter-spacing:.02em;opacity:1;font-weight:400}
+.total{text-align:right;font-family:var(--f-display);font-variant-numeric:tabular-nums}
+.total small{display:block;font-family:var(--f-body);font-size:11px;opacity:.7;letter-spacing:.06em}
+.total span{font-size:26px}
+.tabs{display:flex;gap:4px;margin:12px 0 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px}
+.tabs button{flex:1;border:0;background:none;color:var(--muted);font:500 14px var(--f-body);padding:8px 0;border-radius:7px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--soft);color:var(--ink)}
+.days{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 12px;font:13px var(--f-body);cursor:pointer;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.item{position:relative;text-align:left;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:12px;cursor:pointer;font:inherit;min-height:84px;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.item:active{transform:scale(.98)}
+.item .n{font-weight:500;line-height:1.3;word-break:break-word}
+.item .p{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.item .cnt{font-family:var(--f-display);font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.item .cnt small{font-family:var(--f-body);font-size:11px;color:var(--muted);margin-left:3px}
+.item .cnt.low{color:var(--warn)}
+.li .qty{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.li .qty small{font-family:var(--f-body);font-size:11px;color:var(--muted);margin-left:2px}
+.li .sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);font:700 13px var(--f-body);min-width:24px;height:24px;border-radius:12px;display:grid;place-items:center;padding:0 6px}
+.item[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.selname{font-weight:700;font-size:17px;word-break:break-word}
+.selname small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.selname.none{font-weight:400;color:var(--muted);font-size:14px}
+.stepper{display:grid;grid-template-columns:64px 1fr 64px;gap:8px;align-items:center}
+.stp{height:56px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:26px;cursor:pointer}
+.stp:disabled{opacity:.35;cursor:default}
+.qout{text-align:center;font-family:var(--f-display);font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.quick .chip{padding:8px 0;font-size:15px}
+.sticky-cart{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.crow{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid var(--line);cursor:pointer}
+.crow:first-child{border-top:0}
+.crow.on{background:var(--soft)}
+.ck{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;background:var(--paper)}
+.on>.ck,.ck.on{background:var(--accent);border-color:var(--accent)}
+.on>.ck::after,.ck.on::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+.crow .main{flex:1;min-width:0}
+.crow .nm{font-weight:500;word-break:break-word;line-height:1.35}
+.crow .meta b{font-weight:500;color:var(--ink)}
+.crow .meta b.low{color:var(--warn)}
+.qs{flex:none;display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+.qs button{width:34px;height:34px;border:0;background:none;color:var(--ink);font-size:18px;cursor:pointer}
+.qs button:disabled{opacity:.3}
+.qs span{min-width:30px;text-align:center;font-family:var(--f-display);font-size:18px;font-variant-numeric:tabular-nums}
+.paybar{display:flex;align-items:center;gap:10px;margin-top:12px}
+section[data-pane="sell"]{padding-bottom:84px}
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--paper);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bin{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;align-items:center;gap:12px}
+.allsel{display:flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font:14px var(--f-body);cursor:pointer;padding:0}
+.btot{flex:1;text-align:right;min-width:0}
+.btot span{font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums}
+.btot small{display:block;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.go{border:0;background:var(--accent);color:var(--accent-ink);font:700 16px var(--f-body);padding:12px 22px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.go:disabled{opacity:.4;cursor:default}
+.ghead{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-top:1px solid var(--line);cursor:pointer;font-weight:700}
+.ghead:first-child{border-top:0}
+.ghead .meta{font-weight:400;margin-left:auto}
+.tag{display:inline-block;font-size:11px;font-weight:500;line-height:1;padding:3px 6px;border-radius:5px;background:var(--soft);color:var(--accent);vertical-align:1px;white-space:nowrap}
+.tag.Amber{background:var(--amber-soft);color:var(--amber)}
+.tag.none{background:var(--line);color:var(--muted)}
+button.tag{border:0;cursor:pointer;font-family:var(--f-body)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg.three{grid-template-columns:1fr 1fr 1fr}
+.seg button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:9px 0;font:500 14px var(--f-body);cursor:pointer}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.seg button.Amber[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-soft)}
+.copybox{width:100%;min-height:140px;font:13px/1.6 ui-monospace,monospace;margin-top:8px}
+.cart{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.row>*{min-width:0}
+.line{font-size:14px}
+.line .x{color:var(--muted);font-variant-numeric:tabular-nums}
+.minus{border:1px solid var(--line);background:none;color:var(--ink);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:16px;line-height:1}
+.sum{font-family:var(--f-display);font-size:28px;font-variant-numeric:tabular-nums}
+.pay{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font:700 16px var(--f-body);padding:13px;border-radius:10px;cursor:pointer;width:100%}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:none;color:var(--muted);border:1px solid var(--line);font-weight:500;font-size:14px;padding:9px}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);letter-spacing:.04em}
+input,select{font:15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form .wide{grid-column:1/-1}
+h2{font-size:13px;letter-spacing:.08em;color:var(--muted);font-weight:500;margin:20px 0 8px}
+.list{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:flex;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li .main{flex:1;min-width:0}
+.li .main div{word-break:break-word}
+.li .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.li .amt{font-family:var(--f-display);font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.li .amt.neg{color:var(--warn)}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px}
+.del.ed{color:var(--accent)}
+.del.armed{background:var(--warn);color:var(--bg)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat small{font-size:12px;color:var(--muted)}
+.stat div{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:14px}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:20}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.item:active{transform:none}}
+.brand .sync{display:inline-block;margin-top:3px;font-size:11px;letter-spacing:.04em;opacity:1;background:var(--amber-soft);color:var(--amber);border-radius:999px;padding:1px 8px}
+.lock{position:fixed;inset:0;z-index:30;background:var(--bg);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px))}
+.lockbox{width:100%;max-width:360px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:12px}
+.lockbox .brand{color:var(--ink)}
+.lockbox .brand b{font-size:24px}
+.rem{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);cursor:pointer}
+.rem input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex:none}
+.lockbox .note{margin:0;color:var(--warn)}
+.lock[hidden],.brand .sync[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="band"><div class="in">
+  <div class="brand">2026 武蔵美 芸術祭<b>エリオや 账本</b><small class="sync" id="sync" hidden></small></div>
+  <div class="total"><small id="totalLabel">今日卖出</small><span id="bandTotal">0 件</span><small id="bandYen"></small></div>
+</div></div>
+
+<div class="wrap">
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="sell" aria-selected="true">收银</button>
+    <button role="tab" data-tab="log" aria-selected="false">流水</button>
+    <button role="tab" data-tab="sum" aria-selected="false">汇总</button>
+    <button role="tab" data-tab="items" aria-selected="false">商品</button>
+  </div>
+
+  <div id="status" class="note" hidden></div>
+
+  <!-- 收银 -->
+  <section data-pane="sell">
+    <div class="days" id="daysSell"></div>
+    <div class="list" id="itemGrid"></div>
+    <div class="paybar"><span class="meta">收款</span><div class="pay" id="payChips"></div></div>
+    <label class="f" style="margin-top:12px">记账人（会记住）<input id="who" placeholder="你的名字，可不填"></label>
+  </section>
+
+  <!-- 流水 -->
+  <section data-pane="log" hidden>
+    <div class="days" id="daysLog"></div>
+    <div class="list" id="logList"></div>
+  </section>
+
+  <!-- 汇总 -->
+  <section data-pane="sum" hidden>
+    <div class="days" id="daysSum"></div>
+    <div class="days" id="ownSum"></div>
+    <div class="stats" id="stats"></div>
+    <h2>按商品</h2>
+    <div class="list" id="byItem"></div>
+    <h2>按收款方式</h2>
+    <div class="list" id="byPay"></div>
+    <div id="byOwnerWrap"><h2>按归属</h2><div class="list" id="byOwner"></div></div>
+    <div id="billWrap" hidden><h2 id="billTitle">清单</h2><button class="btn ghost" id="copyBill">复制清单文字</button><textarea class="copybox" id="billText" readonly></textarea></div>
+    <h2>导出</h2>
+    <button class="btn ghost" id="csv">导出 CSV（按上面选的日期和归属）</button>
+  </section>
+
+  <!-- 商品 -->
+  <section data-pane="items" hidden>
+    <h2 id="formTitle" style="margin-top:4px">添加商品</h2>
+    <div class="form" id="itemForm">
+      <div class="f wide">谁的商品<div class="seg" id="itOwner"></div></div>
+      <label class="f wide">商品名<input id="itName" placeholder="例：亚克力挂件 A"></label>
+      <label class="f">带去的数量<input id="itStock" type="number" inputmode="numeric" min="0" placeholder="用来算剩余"></label>
+      <label class="f">单价（日元）<input id="itPrice" type="number" inputmode="numeric" min="0" placeholder="可不填"></label>
+      <div class="wide" style="display:grid;gap:6px"><button class="btn" id="addItem">添加商品</button><button class="btn ghost" id="cancelEdit" hidden>取消编辑</button></div>
+    </div>
+    <h2>商品列表</h2>
+    <div class="list" id="itemList"></div>
+    <p class="note">点「编辑」可以改归属、名字、数量和单价（点归属标签也能快速切换）。改名字和归属后，已经记下的流水会按新的来显示和统计；改单价只影响之后记的，已经记下的金额不变。剩余数量 = 带去的数量 − 三天卖出总数。</p>
+    <button class="btn ghost" id="forget" style="margin-top:16px">在这台设备上退出（忘记口令）</button>
+  </section>
+</div>
+<div class="bottom" id="bottom">
+  <div class="bin">
+    <button class="allsel" id="allSel"><span class="ck" id="allCk"></span>全选</button>
+    <div class="btot"><span id="bCount">已选 0 件</span><small id="bYen"></small></div>
+    <button class="go" id="commit" disabled>记入</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="lock" id="lock" hidden>
+  <form class="lockbox" id="lockForm" autocomplete="on">
+    <div class="brand">2026 武蔵美 芸術祭<b>エリオや 账本</b></div>
+    <input type="text" name="username" value="eriya-ledger" autocomplete="username" hidden>
+    <label class="f">口令<input id="pass" type="password" autocomplete="current-password" placeholder="问摊主要口令"></label>
+    <label class="rem"><input type="checkbox" id="remember" checked>在这台设备上记住口令</label>
+    <button class="btn" id="unlockBtn">打开账本</button>
+    <p class="note" id="lockMsg" hidden></p>
+  </form>
+</div>
+
+
+<script src="config.js"></script>
+<script>
+const DAYS=["10/23","10/24","10/25"];
+const PAYS=["现金","PayPay","其他"];
+const OWNERS=["Riye","Amber"];
+const $=s=>document.querySelector(s);
+const yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function todayKey(){const d=new Date();const k=(d.getMonth()+1)+"/"+d.getDate();return DAYS.includes(k)?k:DAYS[0]}
+let S={items:[],sales:[],exps:[],day:todayKey(),sumDay:"all",sumOwner:"all",logDay:todayKey(),on:{},qty:{},editId:null,pay:"现金",itOwner:"Riye",expOwner:"共同",ready:false};
+try{S.pay=localStorage.getItem("pay")||"现金";S.itOwner=localStorage.getItem("itOwner")||"Riye";$("#who").value=localStorage.getItem("who")||""}catch(e){}
+
+/* ---------- 数据层：GitHub Contents API + 本地操作队列 ---------- */
+const CFG=window.LEDGER_CONFIG||null;
+const API=(CFG&&CFG.api)||"https://api.github.com";
+const NS=CFG?CFG.repo+"/"+CFG.path:"";
+const QKEY="ledger-queue:"+NS,CKEY="ledger-cache:"+NS,PKEY="ledger-pass";
+let TOKEN=null;            // 解密出的 token 只放在内存里
+const D={base:{items:[],sales:[],del:[]},sha:null,etag:null,flushing:false,net:true,err:""};
+const memQ=[];             // localStorage 不可用时的兜底
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
+const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+function loadQ(){const r=lsGet(QKEY);if(r===null)return memQ.slice();try{return JSON.parse(r)||[]}catch(e){return[]}}
+function saveQ(q){if(!lsSet(QKEY,JSON.stringify(q))){memQ.length=0;memQ.push(...q)}}
+function enqueue(op){op.oid=uid();const q=loadQ();q.push(op);saveQ(q);render();flush()}
+function dropOps(oids){const set=new Set(oids);saveQ(loadQ().filter(o=>!set.has(o.oid)))}
+function uid(){if(crypto.randomUUID)return crypto.randomUUID();const b=crypto.getRandomValues(new Uint8Array(16));return[...b].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const norm=d=>({items:Array.isArray(d&&d.items)?d.items:[],sales:Array.isArray(d&&d.sales)?d.sales:[],del:Array.isArray(d&&d.del)?d.del:[]});
+
+// 每个 op 都按 id 操作，重复应用不出错；del 里记下删过的 id，防止删掉的记录被重放复活
+function applyOps(base,ops){
+  const d=norm(JSON.parse(JSON.stringify(base)));const gone=new Set(d.del);
+  for(const o of ops){
+    if(o.t==="addSale"){if(!gone.has(o.v.id)&&!d.sales.some(s=>s.id===o.v.id))d.sales.push(o.v)}
+    else if(o.t==="delSale"){d.sales=d.sales.filter(s=>s.id!==o.id);if(!gone.has(o.id)){gone.add(o.id);d.del.push(o.id)}}
+    else if(o.t==="addItem"){if(!gone.has(o.v.id)&&!d.items.some(i=>i.id===o.v.id))d.items.push(o.v)}
+    else if(o.t==="updItem"){const it=d.items.find(i=>i.id===o.id);if(it)Object.assign(it,o.v)}
+    else if(o.t==="delItem"){d.items=d.items.filter(i=>i.id!==o.id);if(!gone.has(o.id)){gone.add(o.id);d.del.push(o.id)}}
+  }
+  return d;
+}
+function view(){const d=applyOps(D.base,loadQ());S.items=d.items.slice().sort((a,b)=>(a.order||0)-(b.order||0));S.sales=d.sales}
+
+const b64d=s=>Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0));
+function utf8ToB64(str){const b=new TextEncoder().encode(str);let s="";for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
+const b64ToUtf8=s=>new TextDecoder().decode(b64d(s));
+class HttpErr extends Error{constructor(s){super("HTTP "+s);this.status=s}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function gh(method,path,body,extra){
+  return fetch(API+path,{method,cache:"no-store",headers:{"Authorization":"Bearer "+TOKEN,"Accept":"application/vnd.github+json",...(body?{"Content-Type":"application/json"}:{}),...(extra||{})},body:body?JSON.stringify(body):undefined});
+}
+const filePath=()=>`/repos/${CFG.repo}/contents/${CFG.path.split("/").map(encodeURIComponent).join("/")}`;
+async function pull(useEtag){
+  const r=await gh("GET",filePath()+(CFG.branch?"?ref="+encodeURIComponent(CFG.branch):""),null,useEtag&&D.etag?{"If-None-Match":D.etag}:null);
+  if(r.status===304)return{same:true};
+  if(r.status===404)return{missing:true};
+  if(!r.ok)throw new HttpErr(r.status);
+  const j=await r.json();
+  return{data:norm(JSON.parse(b64ToUtf8(j.content||"")||"{}")),sha:j.sha,etag:r.headers.get("ETag")};
+}
+function saveCache(){lsSet(CKEY,JSON.stringify({data:D.base,sha:D.sha,etag:D.etag}))}
+function loadCache(){try{const c=JSON.parse(lsGet(CKEY));if(c&&c.data){D.base=norm(c.data);D.sha=c.sha||null;D.etag=c.etag||null}}catch(e){}}
+
+async function poll(){
+  if(!TOKEN||D.flushing||document.hidden)return;
+  try{
+    const r=await pull(true);
+    if(r.missing){D.base=norm({});D.sha=null;D.etag=null}
+    else if(!r.same){D.base=r.data;D.sha=r.sha;D.etag=r.etag;saveCache()}
+    D.net=true;if(D.err==="net")D.err="";
+  }catch(e){netOrAuth(e)}
+  render();
+  if(loadQ().length)flush();
+}
+
+// 把队列里的 op 按顺序应用到最新文件上，带 sha 提交；冲突就重新拉取再来
+async function flush(){
+  if(!TOKEN||D.flushing||!loadQ().length)return;
+  D.flushing=true;render();
+  try{
+    for(let n=0;n<8;n++){
+      const ops=loadQ();if(!ops.length)break;
+      const cur=await pull(false);
+      const base=cur.missing?norm({}):cur.data;
+      const next=applyOps(base,ops);
+      const who=(lsGet("who")||"").trim();
+      const r=await gh("PUT",filePath(),{message:`记账 ${ops.length} 笔${who?" · "+who:""}`,content:utf8ToB64(JSON.stringify(next,null,1)+"\n"),...(cur.sha?{sha:cur.sha}:{}),...(CFG.branch?{branch:CFG.branch}:{})});
+      if(r.ok){
+        const j=await r.json();
+        dropOps(ops.map(o=>o.oid));
+        D.base=next;D.sha=j.content&&j.content.sha;D.etag=null;saveCache();
+        D.net=true;if(D.err==="net")D.err="";
+        render();n=-1;continue;   // 期间又有新 op 就接着传
+      }
+      if(r.status===409||r.status===422){await sleep(300*2**n+Math.random()*400);continue}
+      throw new HttpErr(r.status);
+    }
+  }catch(e){netOrAuth(e)}
+  finally{D.flushing=false;render()}
+}
+function netOrAuth(e){
+  if(e instanceof HttpErr){
+    if(e.status===401)D.err="账本已停用：访问令牌失效了（可能已被删除或过期）。";
+    else if(e.status===403||e.status===404)D.err="令牌没有这个数据仓库的读写权限，请联系摊主。";
+    else{D.err="net";D.net=false}
+  }else{D.err="net";D.net=false}
+}
+
+function syncUI(){
+  const n=loadQ().length;const el=$("#sync");
+  el.hidden=!n;el.textContent=n?`${n} 笔未同步`+(D.flushing?" · 上传中…":(D.net?"":" · 等网络恢复")):"";
+  if(D.err&&D.err!=="net")status(D.err);
+  else if(n&&!D.net)status(`网络不通，${n} 笔先存在这台手机上，联网后会自动上传。别清浏览器数据。`);
+  else if(!S.ready)status("");
+  else status("");
+}
+
+/* ---------- 口令解锁 ---------- */
+async function decryptToken(pass){
+  const enc=new TextEncoder();
+  const k=await crypto.subtle.importKey("raw",enc.encode(pass),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",hash:"SHA-256",salt:b64d(CFG.kdf.salt),iterations:CFG.kdf.iterations},k,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64d(CFG.cipher.iv)},key,b64d(CFG.cipher.ct));
+  return new TextDecoder().decode(pt);
+}
+const cleanPass=p=>String(p||"").normalize("NFC").trim();
+async function unlock(pass,remember){
+  const tok=await decryptToken(pass);   // 口令错会抛 OperationError
+  TOKEN=tok;
+  if(remember)lsSet(PKEY,pass);else lsDel(PKEY);
+  $("#lock").hidden=true;S.ready=true;
+  loadCache();render();
+  try{const r=await gh("GET",`/repos/${CFG.repo}`);if(!r.ok)throw new HttpErr(r.status)}catch(e){netOrAuth(e)}
+  await poll();
+  setInterval(poll,10000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
+  window.addEventListener("online",()=>{D.net=true;poll()});
+  window.addEventListener("storage",e=>{if(e.key===QKEY||e.key===CKEY){if(e.key===CKEY)loadCache();render()}});
+}
+function showLock(msg){$("#lock").hidden=false;$("#lockMsg").textContent=msg||"";$("#lockMsg").hidden=!msg;setTimeout(()=>$("#pass").focus(),50)}
+$("#lockForm").onsubmit=async e=>{
+  e.preventDefault();const p=cleanPass($("#pass").value);
+  if(!p){showLock("请输入口令。");return}
+  const b=$("#unlockBtn");b.disabled=true;b.textContent="解锁中…";
+  try{await unlock(p,$("#remember").checked)}
+  catch(err){showLock(err&&err.name==="OperationError"?"口令不对，请再确认一下（注意大小写和全角半角）。":"这个浏览器打不开账本，换 Safari 或 Chrome 试试。")}
+  finally{b.disabled=false;b.textContent="打开账本"}
+};
+$("#forget").onclick=()=>{const n=loadQ().length;
+  if(n&&!confirm(`还有 ${n} 笔没同步，退出后它们仍留在这台手机上，下次输入口令会继续上传。确定退出？`))return;
+  lsDel(PKEY);location.reload()};
+
+/* ---------- 界面（沿用原版） ---------- */
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,1600)}
+function status(t){const el=$("#status");el.textContent=t||"";el.hidden=!t}
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll("[data-pane]").forEach(p=>p.hidden=p.dataset.pane!==b.dataset.tab);
+  render();
+});
+
+function chips(el,opts,cur,set){
+  el.innerHTML=opts.map(([v,t])=>`<button class="chip" aria-pressed="${v===cur}" data-v="${v}">${t}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>b.onclick=()=>{set(b.dataset.v);render()});
+}
+const dayChips=(el,cur,withAll,set)=>chips(el,(withAll?[["all","三天合计"]]:[]).concat(DAYS.map(d=>[d,d])),cur,set);
+function seg(el,opts,cur,set){
+  el.innerHTML=opts.map(v=>`<button type="button" class="${esc(v)}" aria-pressed="${v===cur}" data-v="${esc(v)}">${esc(v)}</button>`).join("");
+  el.querySelectorAll("button").forEach(b=>b.onclick=()=>{set(b.dataset.v);render()});
+}
+const normOwner=o=>OWNERS.includes(o)?o:"未分";
+const itemOwner=i=>normOwner(i.owner);
+const lineOwner=l=>{const it=S.items.find(i=>i.id===l.itemId);return normOwner(it?it.owner:l.owner)};
+const tag=o=>`<span class="tag ${o==="未分"?"none":o}">${o}</span>`;
+const soldOf=id=>S.sales.reduce((a,s)=>a+(s.lines||[]).filter(l=>l.itemId===id).reduce((x,l)=>x+l.qty,0),0);
+const saleTotal=s=>(s.lines||[]).reduce((a,l)=>a+l.price*l.qty,0);
+const inDay=(r,d)=>d==="all"||r.day===d;
+const groups=()=>OWNERS.concat(S.items.some(i=>itemOwner(i)==="未分")?["未分"]:[]);
+
+function render(){
+  view();syncUI();
+  const daySales=S.sales.filter(s=>s.day===S.day);
+  const dayRev=daySales.reduce((a,s)=>a+saleTotal(s),0);
+  const dayPcs=daySales.reduce((a,s)=>a+(s.lines||[]).reduce((x,l)=>x+l.qty,0),0);
+  $("#totalLabel").textContent=S.day+" 卖出";$("#bandTotal").textContent=dayPcs+" 件";$("#bandYen").textContent=yen(dayRev);
+
+  // sell
+  dayChips($("#daysSell"),S.day,false,v=>S.day=v);
+  const g=$("#itemGrid");
+  Object.keys(S.on).forEach(k=>{if(!S.items.find(i=>i.id===k))delete S.on[k]});
+  if(!S.items.length){g.innerHTML=`<div class="empty">还没有商品。去「商品」页加上名字和带去的数量，这里就会列出来。</div>`}
+  else g.innerHTML=groups().map(o=>{
+    const its=S.items.filter(i=>itemOwner(i)===o);if(!its.length)return"";
+    const allOn=its.every(i=>S.on[i.id]);
+    return `<div class="ghead ${allOn?"on":""}" data-o="${o}" role="checkbox" aria-checked="${allOn}" tabindex="0"><span class="ck"></span>${tag(o)}<span class="meta">${its.length} 种</span></div>`+its.map(it=>{
+      const sold=soldOf(it.id);const left=it.stock?it.stock-sold:null;const q=S.qty[it.id]||1;const on=!!S.on[it.id];
+      const meta=(left!==null?`剩 <b class="${left<=3?"low":""}">${left}</b> · `:"")+`已卖 <b>${sold}</b>`+(it.price?` · ${yen(it.price)}`:"");
+      return `<div class="crow ${on?"on":""}" data-id="${esc(it.id)}" role="checkbox" aria-checked="${on}" tabindex="0"><span class="ck"></span><div class="main"><div class="nm">${esc(it.name)}</div><div class="meta">${meta}</div></div><div class="qs"><button data-d="-1" aria-label="减一" ${q<=1?"disabled":""}>−</button><span>${q}</span><button data-d="1" aria-label="加一">＋</button></div></div>`}).join("")}).join("");
+  g.querySelectorAll(".ghead").forEach(h=>{const o=h.dataset.o;const its=S.items.filter(i=>itemOwner(i)===o);
+    const tg=()=>{const all=its.every(i=>S.on[i.id]);its.forEach(i=>S.on[i.id]=!all);render()};
+    h.onclick=tg;h.onkeydown=e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();tg()}}});
+  g.querySelectorAll(".crow").forEach(r=>{const id=r.dataset.id;
+    r.onclick=e=>{const b=e.target.closest(".qs button");
+      if(b){S.qty[id]=Math.max(1,(S.qty[id]||1)+(+b.dataset.d));S.on[id]=true}
+      else if(e.target.closest(".qs"))return;
+      else S.on[id]=!S.on[id];
+      render()};
+    r.onkeydown=e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();S.on[id]=!S.on[id];render()}};
+  });
+  const picked=S.items.filter(i=>S.on[i.id]);
+  const pq=picked.reduce((a,i)=>a+(S.qty[i.id]||1),0),py=picked.reduce((a,i)=>a+(i.price||0)*(S.qty[i.id]||1),0);
+  $("#bCount").textContent=`已选 ${pq} 件`;$("#bYen").textContent=picked.length?`${picked.length} 种 · ${yen(py)}`:"";
+  const all=S.items.length&&picked.length===S.items.length;$("#allCk").className="ck"+(all?" on":"");
+  $("#bottom").hidden=!document.querySelector('.tabs [data-tab="sell"][aria-selected="true"]');
+  chips($("#payChips"),PAYS.map(p=>[p,p]),S.pay,v=>{S.pay=v;try{localStorage.setItem("pay",v)}catch(e){}});
+  $("#commit").disabled=!S.ready||!picked.length;$("#addItem").disabled=!S.ready;
+
+  // log
+  dayChips($("#daysLog"),S.logDay,true,v=>S.logDay=v);
+  const rows=[...S.sales.filter(s=>inDay(s,S.logDay)).map(s=>({k:"sale",r:s}))].sort((a,b)=>b.r.ts-a.r.ts);
+  $("#logList").innerHTML=rows.length?rows.map(({k,r})=>{
+    const t=new Date(r.ts);const hm=t.getHours()+":"+String(t.getMinutes()).padStart(2,"0");
+    const desc=(r.lines||[]).map(l=>tag(lineOwner(l))+" "+esc((S.items.find(i=>i.id===l.itemId)||l).name)+(l.qty>1?" ×"+l.qty:"")).join("<br>");
+    const right=`<span class="qty">${(r.lines||[]).reduce((x,l)=>x+l.qty,0)}<small>件</small></span>`;
+    return `<div class="li"><div class="main"><div>${desc}</div><div class="meta">${r.day} ${hm} · ${esc(r.pay)} · ${yen(saleTotal(r))}${r.who?" · "+esc(r.who):""}</div></div>${right}<button class="del" data-k="${k}" data-id="${esc(r.id)}">删除</button></div>`}).join(""):`<div class="empty">这一天还没有记录。</div>`;
+  armDeletes($("#logList"),(k,id)=>enqueue({t:"delSale",id}));
+
+  // summary
+  dayChips($("#daysSum"),S.sumDay,true,v=>S.sumDay=v);
+  chips($("#ownSum"),[["all","两人合计"]].concat(OWNERS.map(o=>[o,o])),S.sumOwner,v=>S.sumOwner=v);
+  const own=S.sumOwner;const mine=o=>own==="all"||o===own;
+  const ss=S.sales.filter(s=>inDay(s,S.sumDay));
+  const L=[];ss.forEach(s=>(s.lines||[]).forEach(l=>{const o=lineOwner(l);if(mine(o))L.push({...l,o,pay:s.pay,sid:s.id})}));
+  const rev=L.reduce((a,l)=>a+l.price*l.qty,0),pcs=L.reduce((a,l)=>a+l.qty,0),txn=new Set(L.map(l=>l.sid)).size;
+  const types=new Set(L.map(l=>l.itemId)).size;
+  $("#stats").innerHTML=[["卖出件数",pcs+" 件"],["成交笔数",txn+" 笔"],["营业额",yen(rev)],["卖出的商品种类",types+" 种"]].map(([a,b])=>`<div class="stat"><small>${a}</small><div>${b}</div></div>`).join("");
+  const bi={};S.items.filter(i=>mine(itemOwner(i))).forEach(it=>bi[it.id]={id:it.id,n:it.name,o:itemOwner(it),q:0,y:0,stock:it.stock||0,price:it.price||0});
+  L.forEach(l=>{const o=bi[l.itemId]||(bi[l.itemId]={id:l.itemId,n:l.name,o:l.o,q:0,y:0,stock:0,price:l.price});o.q+=l.qty;o.y+=l.qty*l.price});
+  const biE=Object.values(bi).sort((a,b)=>b.q-a.q);
+  $("#byItem").innerHTML=biE.length?biE.map(o=>`<div class="li"><div class="main"><div>${own==="all"?tag(o.o)+" ":""}${esc(o.n)}</div><div class="meta">${yen(o.y)}${o.stock?" · 带去 "+o.stock+"，现在剩 "+(o.stock-soldOf(o.id)):""}</div></div><span class="qty">${o.q}<small>件</small></span></div>`).join(""):`<div class="empty">还没有商品。</div>`;
+  const bp={};L.forEach(l=>{bp[l.pay]=(bp[l.pay]||0)+l.price*l.qty});
+  $("#byPay").innerHTML=PAYS.filter(p=>bp[p]).map(p=>`<div class="li"><div class="main"><div>${p}</div>${p==="现金"?`<div class="meta">收摊对钱箱用（不含找零备用金）</div>`:""}</div><span class="amt">${yen(bp[p])}</span></div>`).join("")||`<div class="empty">还没有卖出。</div>`;
+  $("#byOwnerWrap").hidden=own!=="all";
+  if(own==="all"){
+    const per=OWNERS.map(o=>{const ls=L.filter(l=>l.o===o);return{o,q:ls.reduce((a,l)=>a+l.qty,0),y:ls.reduce((a,l)=>a+l.qty*l.price,0)}});
+    $("#byOwner").innerHTML=per.map(p=>`<div class="li"><div class="main"><div>${tag(p.o)}</div><div class="meta">营业额 ${yen(p.y)}</div></div><span class="qty">${p.q}<small>件</small></span></div>`).join("");
+  }
+  $("#billWrap").hidden=own==="all";
+  if(own!=="all"){
+    const dlab=S.sumDay==="all"?"10/23–10/25":S.sumDay;
+    const lines=biE.filter(o=>o.q>0).map(o=>`${o.n}　${o.q} 件${o.y?"　"+yen(o.y):""}`);
+    $("#billTitle").textContent=own+" 的清单";
+    $("#billText").value=[`エリオや 芸術祭 ${own} 销售清单（${dlab}）`,"",...(lines.length?lines:["（还没有卖出）"]),"",`合计　${pcs} 件　${yen(rev)}`].join("\n");
+  }
+
+  // items
+  seg($("#itOwner"),OWNERS,S.itOwner,v=>{S.itOwner=v;if(!S.editId)try{localStorage.setItem("itOwner",v)}catch(e){}});
+  $("#itemList").innerHTML=S.items.length?groups().map(o=>S.items.filter(i=>itemOwner(i)===o).map(it=>{const sold=soldOf(it.id);
+    return `<div class="li"><div class="main"><div><button class="tag ${o==="未分"?"none":o}" data-sw="${esc(it.id)}" title="点一下切换归属" ${S.ready?"":"disabled"}>${o}</button> ${esc(it.name)}</div><div class="meta">${it.price?yen(it.price):"未填单价"}${it.stock?" · 带去 "+it.stock+" · 剩 "+(it.stock-sold):""}</div></div><span class="qty">${sold}<small>已卖</small></span><button class="del ed" data-ed="${esc(it.id)}">编辑</button><button class="del" data-k="item" data-id="${esc(it.id)}">删除</button></div>`}).join("")).join(""):`<div class="empty">还没有商品。</div>`;
+  $("#itemList").querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>startEdit(b.dataset.ed));
+  if(S.editId&&!S.items.find(i=>i.id===S.editId))endEdit();
+  $("#formTitle").textContent=S.editId?"编辑商品":"添加商品";$("#addItem").textContent=S.editId?"保存修改":"添加商品";$("#cancelEdit").hidden=!S.editId;
+  $("#itemList").querySelectorAll("[data-sw]").forEach(b=>b.onclick=()=>{
+    const it=S.items.find(i=>i.id===b.dataset.sw);if(!it)return;const next=itemOwner(it)==="Riye"?"Amber":"Riye";
+    try{enqueue({t:"updItem",id:it.id,v:{owner:next}});toast(it.name+" → "+next)}catch(e){fail(e)}});
+  armDeletes($("#itemList"),(k,id)=>enqueue({t:"delItem",id}));
+}
+function armDeletes(root,fn){root.querySelectorAll(".del[data-k]").forEach(b=>b.onclick=async()=>{
+  if(!b.classList.contains("armed")){b.classList.add("armed");b.textContent="确认删除";setTimeout(()=>{b.classList.remove("armed");b.textContent="删除"},3000);return}
+  try{await fn(b.dataset.k,b.dataset.id);toast("已删除")}catch(e){fail(e)}})}
+function fail(e){toast("没存上，再试一次")}
+const who=()=>{const w=$("#who").value.trim();try{localStorage.setItem("who",w)}catch(e){}return w};
+
+$("#allSel").onclick=()=>{const all=S.items.every(i=>S.on[i.id]);S.items.forEach(i=>S.on[i.id]=!all);render()};
+$("#commit").onclick=()=>{
+  const lines=S.items.filter(i=>S.on[i.id]).map(i=>({itemId:i.id,name:i.name,owner:itemOwner(i),price:i.price||0,qty:S.qty[i.id]||1}));
+  if(!lines.length)return;
+  try{S.on={};S.qty={};enqueue({t:"addSale",v:{id:uid(),lines,pay:S.pay,day:S.day,ts:Date.now(),who:who()}});toast("记好了 "+lines.reduce((a,l)=>a+l.qty,0)+" 件")}catch(e){fail(e)}
+  render();
+};
+function startEdit(id){const it=S.items.find(i=>i.id===id);if(!it)return;S.editId=id;
+  S.itOwner=itemOwner(it)==="未分"?"Riye":itemOwner(it);$("#itName").value=it.name||"";$("#itStock").value=it.stock||"";$("#itPrice").value=it.price||"";
+  render();$("#formTitle").scrollIntoView({behavior:"smooth",block:"start"});$("#itName").focus({preventScroll:true})}
+function endEdit(){S.editId=null;$("#itName").value="";$("#itPrice").value="";$("#itStock").value="";try{S.itOwner=localStorage.getItem("itOwner")||S.itOwner}catch(e){}}
+$("#cancelEdit").onclick=()=>{endEdit();render()};
+$("#addItem").onclick=()=>{
+  const name=$("#itName").value.trim(),price=Number($("#itPrice").value)||0,stock=Number($("#itStock").value)||0;
+  if(!name){toast("填上商品名");return}
+  if(S.editId){const id=S.editId;
+    try{enqueue({t:"updItem",id,v:{name,owner:S.itOwner,price,stock}});toast("改好了："+name);endEdit();render()}catch(e){fail(e)}
+    return}
+  try{enqueue({t:"addItem",v:{id:uid(),name,owner:S.itOwner,price,stock,order:Date.now()}});$("#itName").value="";$("#itPrice").value="";$("#itStock").value="";toast("加好了："+S.itOwner+" 的 "+name)}catch(e){fail(e)}
+};
+$("#copyBill").onclick=()=>{const t=$("#billText");
+  try{navigator.clipboard.writeText(t.value).then(()=>toast("已复制"),()=>{t.select();toast("已选中，长按复制")})}catch(e){t.select();toast("已选中，长按复制")}};
+
+// 导出 CSV：每条销售明细一行，按汇总页当前选的日期和归属
+$("#csv").onclick=()=>{
+  const own=S.sumOwner,q=v=>{const s=String(v??"");return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const rows=[["日期","时间","归属","商品","件数","单价","收款方式","记账人"]];
+  S.sales.filter(s=>inDay(s,S.sumDay)).sort((a,b)=>a.ts-b.ts).forEach(s=>{const t=new Date(s.ts);
+    (s.lines||[]).forEach(l=>{const o=lineOwner(l);if(own!=="all"&&o!==own)return;
+      rows.push([t.getFullYear()+"/"+s.day,String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0"),o,(S.items.find(i=>i.id===l.itemId)||l).name,l.qty,l.price,s.pay,s.who||""])})});
+  if(rows.length<2){toast("还没有可导出的销售");return}
+  const blob=new Blob(["﻿"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`eriya-sales-${S.sumDay==="all"?"all":S.sumDay.replace("/","-")}-${own}.csv`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast(`导出了 ${rows.length-1} 行`);
+};
+
+render();
+(async()=>{
+  if(!CFG||!CFG.kdf||!CFG.cipher){showLock("账本还没配置好（缺少 config.js），请联系摊主。");$("#unlockBtn").disabled=true;return}
+  if(!window.crypto||!crypto.subtle){showLock("这个浏览器打不开账本，换 Safari 或 Chrome 试试。");$("#unlockBtn").disabled=true;return}
+  const saved=lsGet(PKEY);
+  if(saved){try{await unlock(saved,true);return}catch(e){lsDel(PKEY);showLock("口令已经换了，请输入新的口令。");return}}
+  showLock();
+})();
+</script>
+</body>
+</html>
