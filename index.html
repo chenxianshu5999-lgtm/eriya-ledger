@@ -66,6 +66,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .on>.ck,.ck.on{background:var(--accent);border-color:var(--accent)}
 .on>.ck::after,.ck.on::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 .crow .main{flex:1;min-width:0}
+.thumb{flex:none;width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--bg)}
 .crow .nm{font-weight:500;word-break:break-word;line-height:1.35}
 .crow .meta b{font-weight:500;color:var(--ink)}
 .crow .meta b.low{color:var(--warn)}
@@ -404,6 +405,7 @@ const tag=o=>`<span class="tag ${o==="未分"?"none":o}">${o}</span>`;
 const soldOf=id=>S.sales.reduce((a,s)=>a+(s.lines||[]).filter(l=>l.itemId===id).reduce((x,l)=>x+l.qty,0),0);
 const saleTotal=s=>(s.lines||[]).reduce((a,l)=>a+l.price*l.qty,0);
 const inDay=(r,d)=>d==="all"||r.day===d;
+const thumb=it=>/^img\/[\w-]+\.(jpg|png|webp)$/.test(it.img||"")?`<img class="thumb" src="${it.img}" alt="" loading="lazy">`:"";
 const groups=()=>OWNERS.concat(S.items.some(i=>itemOwner(i)==="未分")?["未分"]:[]);
 
 function render(){
@@ -424,7 +426,7 @@ function render(){
     return `<div class="ghead ${allOn?"on":""}" data-o="${o}" role="checkbox" aria-checked="${allOn}" tabindex="0"><span class="ck"></span>${tag(o)}<span class="meta">${its.length} 种</span></div>`+its.map(it=>{
       const sold=soldOf(it.id);const left=it.stock?it.stock-sold:null;const q=S.qty[it.id]||1;const on=!!S.on[it.id];
       const meta=(left!==null?`剩 <b class="${left<=3?"low":""}">${left}</b> · `:"")+`已卖 <b>${sold}</b>`+(it.price?` · ${yen(it.price)}`:"");
-      return `<div class="crow ${on?"on":""}" data-id="${esc(it.id)}" role="checkbox" aria-checked="${on}" tabindex="0"><span class="ck"></span><div class="main"><div class="nm">${esc(it.name)}</div><div class="meta">${meta}</div></div><div class="qs"><button data-d="-1" aria-label="减一" ${q<=1?"disabled":""}>−</button><span>${q}</span><button data-d="1" aria-label="加一">＋</button></div></div>`}).join("")}).join("");
+      return `<div class="crow ${on?"on":""}" data-id="${esc(it.id)}" role="checkbox" aria-checked="${on}" tabindex="0"><span class="ck"></span>${thumb(it)}<div class="main"><div class="nm">${esc(it.name)}</div><div class="meta">${meta}</div></div><div class="qs"><button data-d="-1" aria-label="减一" ${q<=1?"disabled":""}>−</button><span>${q}</span><button data-d="1" aria-label="加一">＋</button></div></div>`}).join("")}).join("");
   g.querySelectorAll(".ghead").forEach(h=>{const o=h.dataset.o;const its=S.items.filter(i=>itemOwner(i)===o);
     const tg=()=>{const all=its.every(i=>S.on[i.id]);its.forEach(i=>S.on[i.id]=!all);render()};
     h.onclick=tg;h.onkeydown=e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();tg()}}});
@@ -485,7 +487,7 @@ function render(){
   // items
   seg($("#itOwner"),OWNERS,S.itOwner,v=>{S.itOwner=v;if(!S.editId)try{localStorage.setItem("itOwner",v)}catch(e){}});
   $("#itemList").innerHTML=S.items.length?groups().map(o=>S.items.filter(i=>itemOwner(i)===o).map(it=>{const sold=soldOf(it.id);
-    return `<div class="li"><div class="main"><div><button class="tag ${o==="未分"?"none":o}" data-sw="${esc(it.id)}" title="点一下切换归属" ${S.ready?"":"disabled"}>${o}</button> ${esc(it.name)}</div><div class="meta">${it.price?yen(it.price):"未填单价"}${it.stock?" · 带去 "+it.stock+" · 剩 "+(it.stock-sold):""}</div></div><span class="qty">${sold}<small>已卖</small></span><button class="del ed" data-ed="${esc(it.id)}">编辑</button><button class="del" data-k="item" data-id="${esc(it.id)}">删除</button></div>`}).join("")).join(""):`<div class="empty">还没有商品。</div>`;
+    return `<div class="li">${thumb(it)}<div class="main"><div><button class="tag ${o==="未分"?"none":o}" data-sw="${esc(it.id)}" title="点一下切换归属" ${S.ready?"":"disabled"}>${o}</button> ${esc(it.name)}</div><div class="meta">${it.price?yen(it.price):"未填单价"}${it.stock?" · 带去 "+it.stock+" · 剩 "+(it.stock-sold):""}</div></div><span class="qty">${sold}<small>已卖</small></span><button class="del ed" data-ed="${esc(it.id)}">编辑</button><button class="del" data-k="item" data-id="${esc(it.id)}">删除</button></div>`}).join("")).join(""):`<div class="empty">还没有商品。</div>`;
   $("#itemList").querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>startEdit(b.dataset.ed));
   if(S.editId&&!S.items.find(i=>i.id===S.editId))endEdit();
   $("#formTitle").textContent=S.editId?"编辑商品":"添加商品";$("#addItem").textContent=S.editId?"保存修改":"添加商品";$("#cancelEdit").hidden=!S.editId;
